@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import moment from 'moment'
 import Card from '@material-ui/core/Card';
+import Button from '@material-ui/core/Button';
 import CardHeader from '@material-ui/core/CardHeader';
 import CardContent from '@material-ui/core/CardContent';
 import IconButton from '@material-ui/core/IconButton';
@@ -10,15 +11,22 @@ import CloseOutlinedIcon from '@material-ui/icons/CloseOutlined';
 import { getTimezone } from '../pages/api/timezones'
 
 export default function TimezoneCard({ timezone, removeTimezone }) {
-  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const [timezoneData, setTimezoneData] = useState({})
 
   async function getTimezoneData() {
-    const data = await getTimezone(timezone)
-    const date = moment(data.datetime.split('T')[0]).format('L')
-    const time = moment(data.datetime.split('T')[1].split('.')[0], 'HH:mm').format('LT')
-    setTimezoneData({ timezone: data.timezone, time, date })
-    setLoading(false)
+    try {
+      setLoading(true)
+      const data = await getTimezone(timezone)
+      const date = moment(data.datetime.split('T')[0]).format('L')
+      const time = moment(data.datetime.split('T')[1].split('.')[0], 'HH:mm').format('LT')
+      setTimezoneData({ timezone: data.timezone, time, date })
+    } catch {
+      setError('There was an error.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -63,9 +71,27 @@ export default function TimezoneCard({ timezone, removeTimezone }) {
               flexDirection: 'column',
             }}
           >
-            <Typography style={{ fontWeight: 'bold' }}>{timezoneData.timezone}</Typography>
-            <Typography>{timezoneData.date}</Typography>
-            <Typography>{timezoneData.time}</Typography>
+            {error !== '' ? (
+              <>
+                <Typography style={{ color: 'red', fontSize:'0.8rem' }}>{error}</Typography>
+                <Button
+                  onClick={getTimezoneData}
+                  style={{
+                    color: 'red',
+                    marginTop: '0.5rem',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  Try again
+                </Button>
+              </>
+            ) : (
+              <>
+                <Typography style={{ fontWeight: 'bold' }}>{timezoneData.timezone}</Typography>
+                <Typography>{timezoneData.date}</Typography>
+                <Typography>{timezoneData.time}</Typography>
+              </>
+            )}
           </CardContent>
         </>
       )}
