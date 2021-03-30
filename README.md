@@ -1,5 +1,7 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+A live version of the the site lives in [https://world-clock-santylorenzo.vercel.app/](https://world-clock-santylorenzo.vercel.app/).
+
 ## Getting Started
 
 First, install all the projects dependecies:
