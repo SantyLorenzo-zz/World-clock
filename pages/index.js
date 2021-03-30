@@ -1,65 +1,94 @@
+import { useState, useEffect } from 'react'
 import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+import Container from '@material-ui/core/Container';
+import TextField from '@material-ui/core/TextField';
+import Autocomplete from '@material-ui/lab/Autocomplete';
+import { getAllTimezones } from './api/timezones'
+import TimezoneCard from '../components/TimezoneCard'
 
-export default function Home() {
+export default function Home(props) {
+  const { timezones } = props
+  const [userTimezones, setUserTimezones] = useState([])
+
+  useEffect(() => {
+    // Check if it's on the client side
+    if (typeof localStorage !== 'undefined') {
+      setUserTimezones(JSON.parse(localStorage.getItem('userTimezones')) || [])
+    }
+  }, [])
+
+  function removeTimezone(timezone) {
+    const newTimezones = [...userTimezones]
+    const indexToRemove = userTimezones.indexOf(timezone)
+    newTimezones.splice(indexToRemove, 1)
+    if (userTimezones.length === 1) {
+      localStorage.removeItem('userTimezones')
+    } else {
+      localStorage.setItem('userTimezones', JSON.stringify(newTimezones))
+    }
+    setUserTimezones(newTimezones)
+  }
+
+  function handleChange(e, value) {
+    if (value !== null && !userTimezones.includes(value)) {
+      const newTimezones = [...userTimezones, value]
+      localStorage.setItem('userTimezones', JSON.stringify(newTimezones))
+      setUserTimezones(newTimezones)
+    }
+  }
+
+  function createNewTimeBox(timezone) {
+    return <TimezoneCard key={timezone} timezone={timezone} removeTimezone={removeTimezone} />
+  }
+
   return (
-    <div className={styles.container}>
+    <Container maxWidth='sm' style={{ paddingTop: '8rem' }}>
       <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
+        <title>World Clock</title>
+        <meta name='description' content='Free World clock' />
+        <meta name='author' content='Santiago Lorenzo' />
+        <link rel='icon' href='/favicon.ico' />
+        <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap' />
       </Head>
 
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+      <main>
+        <Autocomplete
+          blurOnSelect
+          autoHighlight
+          options={timezones}
+          onChange={handleChange}
+          style={{ marginBottom: '3rem' }}
+          getOptionLabel={(option) => option}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              variant='outlined'
+              placeholder='select a country'
+              style={{
+                borderRadius: '4px',
+                backgroundColor: '#ebebeb'
+              }}
+            />
+          )}
+        />
+        <div
+          style={{
+            display: 'flex',
+            flexFlow: 'row wrap',
+            justifyContent: 'space-between'
+          }}
+        >
+          {userTimezones.length > 0 && userTimezones.map(createNewTimeBox)}
         </div>
       </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
-    </div>
+    </Container>
   )
+}
+
+export async function getStaticProps() {
+  const timezones = (await getAllTimezones()) || []
+
+  return {
+    props: { timezones },
+  }
 }
